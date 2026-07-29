@@ -158,7 +158,7 @@
                         }
                     ],
                     "linuxFxVersion": "[variables('linuxFxVersion')]",
-                    "alwaysOn": false
+                    "alwaysOn": true
                 },
                 "serverFarmId": "[concat('/subscriptions/', variables('subscriptionId'),'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('serverFarmName'))]",
                 "clientAffinityEnabled": false
