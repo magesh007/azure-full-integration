@@ -46,14 +46,15 @@ def processData(dataList,log_line_filter):
                     data = flow_tuple.split(',')
                     formatted_line = {field: data[index] for field, index in field_mapping.items()}
                     datetime_obj = datetime.utcfromtimestamp(int(int(formatted_line['Time'])/1000))
-                    formatted_line['Time'] = datetime_obj.strftime('%Y-%m-%d %H:%M:%S.') + str(formatted_line['Time'] % 1000).zfill(3)
+                    formatted_line['Time'] = datetime_obj.strftime('%Y-%m-%d %H:%M:%S.') + str(int(formatted_line['Time']) % 1000).zfill(3)
                     formatted_line["FlowDirection"] = "Inbound" if formatted_line["FlowDirection"] == "I" else "Outbound"
                     formatted_line["Protocol"] = "TCP" if formatted_line["Protocol"] == "T" else "UDP"
                     formatted_line["FlowState"] = trafficAction_mapping[formatted_line["FlowState"]]
                     formatted_line.update(metadata)
-                    parsed_line,_ = log_line_filter(formatted_line)
-                    parsed_lines.append(parsed_line)
-                    log_size+= _
+                    parsed_line, size = log_line_filter(formatted_line)
+                    if parsed_line:
+                        parsed_lines.append(parsed_line)
+                        log_size += size
         return parsed_lines,log_size
 
     except Exception as e:

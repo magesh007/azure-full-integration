@@ -2,7 +2,8 @@ import logging,os
 import azure.functions as func
 from azure.storage.blob import BlobServiceClient
 from azure.data.tables import TableServiceClient
-from Blob_Logs import blob_details,check_point,blob_sender
+from Blob_Logs import blob_details,check_point
+from shared_code import log_processor
 from datetime import datetime
 import ast
 
@@ -16,7 +17,7 @@ initialized = False
 
 if not initialized:
     with TableServiceClient.from_connection_string(table_connection_string) as table_service_client:
-        table_service_client.create_table_if_not_exists(table_name="Checkpoints")
+        table_service_client.create_table_if_not_exists(table_name="check_points")
     initialized = True
 
 def main(myblob: func.InputStream):
@@ -52,7 +53,7 @@ def main(myblob: func.InputStream):
             blob_content = blob_data.readall()
             if blob_content and blob_content[0] == 0x2C:
                 blob_content = blob_content[1:]
-            blob_sender.processData(blob_content,container_name,serviceName)
+            log_processor.process_blob_data(blob_content,container_name,serviceName)
             if tail:
                 checkpoint['check_pointIndex'] = (len(block_list[0])-1)
                 check_pointDB.put_check_point(checkpoint)
