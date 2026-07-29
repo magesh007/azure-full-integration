@@ -3,32 +3,32 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "name": {
-	    "defaultValue": "Site24x7AzureLogs",
+            "defaultValue": "Site24x7AzureLogs",
             "type": "string"
         },
-	"logTypeConfig": {
+        "logTypeConfig": {
             "defaultValue": "Enter Log Type Config String",
             "type": "String"
         },
-    "debugMode":{
-        "defaultValue": "False",
-        "type": "string"
-    }
+        "debugMode": {
+            "defaultValue": "False",
+            "type": "string"
+        }
     },
     "variables": {
-	"suffix": "[substring(toLower(uniqueString(resourceGroup().id, resourceGroup().location)),0,5)]",
-	"subscriptionid": "[subscription().subscriptionId]",
-        "location" :  "[resourceGroup().location]",
-        "linuxFxVersion" : "DOCKER|mcr.microsoft.com/azure-functions/python:4-python3.9-appservice",
-	"funcStorageName": "[tolower(concat(substring(parameters('name'), 0, min(length(parameters('name')),16)), 'stg', variables('suffix')))]",
-        "functionName" : "[concat(parameters('name'), '-Function-', variables('suffix'))]",
-        "serverFarmName" : "[concat(parameters('name'), '-AppServicePlan-', variables('suffix'))]",
-        "namespaces" :"[concat(parameters('name'), '-NameSpace-', variables('suffix'))]",
-        "RootManageSharedAccessKey_name" : "RootManageSharedAccessKey",
-        "eventhubs_logs_name" : "Site24x7-Operational-Logs"
-     },
+        "suffix": "[substring(toLower(uniqueString(resourceGroup().id, resourceGroup().location)),0,5)]",
+        "subscriptionid": "[subscription().subscriptionId]",
+        "location": "[resourceGroup().location]",
+        "linuxFxVersion": "DOCKER|mcr.microsoft.com/azure-functions/python:4-python3.9-appservice",
+        "funcStorageName": "[tolower(concat(substring(parameters('name'), 0, min(length(parameters('name')),16)), 'stg', variables('suffix')))]",
+        "functionName": "[concat(parameters('name'), '-Function-', variables('suffix'))]",
+        "serverFarmName": "[concat(parameters('name'), '-AppServicePlan-', variables('suffix'))]",
+        "namespaces": "[concat(parameters('name'), '-NameSpace-', variables('suffix'))]",
+        "RootManageSharedAccessKey_name": "RootManageSharedAccessKey",
+        "eventhubs_logs_name": "Site24x7-Operational-Logs"
+    },
     "resources": [
-	{
+        {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2018-02-01",
             "name": "[variables('serverFarmName')]",
@@ -50,7 +50,7 @@
                 "targetWorkerSizeId": 0
             }
         },
-	{
+        {
             "type": "Microsoft.EventHub/namespaces",
             "sku": {
                 "name": "Standard",
@@ -71,7 +71,7 @@
             },
             "dependsOn": []
         },
-	{
+        {
             "apiVersion": "2019-06-01",
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[ variables('funcStorageName')]",
@@ -81,7 +81,7 @@
             },
             "properties": {
                 "supportsHttpsTrafficOnly": false,
-		"encryption": {
+                "encryption": {
                     "services": {
                         "file": {
                             "enabled": true
@@ -108,17 +108,45 @@
                 "name": "[variables('functionName')]",
                 "siteConfig": {
                     "appSettings": [
-                        {"name": "FUNCTIONS_WORKER_RUNTIME", "value": "python"},
-                        {"name": "FUNCTIONS_EXTENSION_VERSION", "value": "~4"},
-			            {"name": "logTypeConfig", "value" : "[parameters('logTypeConfig')]"},
-                        {"name": "debugMode", "value" : "[parameters('debugMode')]"},
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "python"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~4"
+                        },
+                        {
+                            "name": "logTypeConfig",
+                            "value": "[parameters('logTypeConfig')]"
+                        },
+                        {
+                            "name": "debugMode",
+                            "value": "[parameters('debugMode')]"
+                        },
                         {
                             "name": "AzureWebJobsStorage",
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('funcStorageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts',  variables('funcStorageName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
                         },
                         {
-			    "name": "AzureEventHubConnectionString", 
-                            "value" : "[listkeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('namespaces'), variables('RootManageSharedAccessKey_name')), '2017-04-01').primaryConnectionString]"
+                            "name": "AzureEventHubConnectionString",
+                            "value": "[listkeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('namespaces'), variables('RootManageSharedAccessKey_name')), '2017-04-01').primaryConnectionString]"
+                        },
+                        {
+                            "name": "WEBSITE_RUN_FROM_PACKAGE",
+                            "value": "1"
+                        },
+                        {
+                            "name": "AzureWebJobs.ServiceBus_Logs.Disabled",
+                            "value": "true"
+                        },
+                        {
+                            "name": "AzureWebJobs.Blob_Logs.Disabled",
+                            "value": "true"
+                        },
+                        {
+                            "name": "ServiceBusQueueName",
+                            "value": "disabled"
                         }
                     ],
                     "linuxFxVersion": "[variables('linuxFxVersion')]",
@@ -133,7 +161,7 @@
                     "name": "web",
                     "type": "sourcecontrols",
                     "dependsOn": [
-                      "[resourceId('Microsoft.Web/sites/', variables('functionName'))]"
+                        "[resourceId('Microsoft.Web/sites/', variables('functionName'))]"
                     ],
                     "properties": {
                         "RepoUrl": "https://github.com/magesh007/azure-full-integration.git",
@@ -141,10 +169,10 @@
                         "publishRunbook": true,
                         "IsManualIntegration": true
                     }
-               }
+                }
             ]
         },
-	{
+        {
             "type": "Microsoft.EventHub/namespaces/AuthorizationRules",
             "name": "[concat(variables('namespaces'), '/', variables('RootManageSharedAccessKey_name'))]",
             "apiVersion": "2017-04-01",
@@ -182,7 +210,7 @@
                 "[resourceId('Microsoft.EventHub/namespaces', variables('namespaces'))]"
             ]
         },
-	{
+        {
             "type": "Microsoft.EventHub/namespaces/eventhubs/consumergroups",
             "name": "[concat(variables('namespaces'), '/', variables('eventhubs_logs_name'), '/', '$Default')]",
             "apiVersion": "2017-04-01",

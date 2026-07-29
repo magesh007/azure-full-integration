@@ -23,39 +23,37 @@
             "type": "int",
             "defaultValue": "[dateTimeToEpoch(utcNow())]",
             "metadata": {
-                "description" : "Enter the epoch time from which you wish to collect logs from"
+                "description": "Enter the epoch time from which you wish to collect logs from"
             }
         },
-        "Tail":{
+        "Tail": {
             "defaultValue": "True",
             "metadata": {
-                "description" : "For other than block blobs input False"
+                "description": "For other than block blobs input False"
             },
             "type": "string"
         },
-        "ContainerName":{
+        "ContainerName": {
             "metadata": {
-                "description" : "Enter the container name from which you wish to collect logs"
+                "description": "Enter the container name from which you wish to collect logs"
             },
             "type": "string"
         }
-        
     },
-    
     "variables": {
-	    "suffix": "[substring(toLower(uniqueString(resourceGroup().id, resourceGroup().location)),0,5)]",
-	    "subscriptionid": "[subscription().subscriptionId]",
-        "location" :  "[resourceGroup().location]",
-        "linuxFxVersion" : "PYTHON|3.11",
-	    "funcStorageName": "[tolower(concat(substring(parameters('name'), 0, min(length(parameters('name')),16)), 'stg', variables('suffix')))]",
-        "functionName" : "[concat(parameters('name'), '-Function-', variables('suffix'))]",
-        "serverFarmName" : "[concat(parameters('name'), '-AppServicePlan-', variables('suffix'))]",
+        "suffix": "[substring(toLower(uniqueString(resourceGroup().id, resourceGroup().location)),0,5)]",
+        "subscriptionid": "[subscription().subscriptionId]",
+        "location": "[resourceGroup().location]",
+        "linuxFxVersion": "PYTHON|3.11",
+        "funcStorageName": "[tolower(concat(substring(parameters('name'), 0, min(length(parameters('name')),16)), 'stg', variables('suffix')))]",
+        "functionName": "[concat(parameters('name'), '-Function-', variables('suffix'))]",
+        "serverFarmName": "[concat(parameters('name'), '-AppServicePlan-', variables('suffix'))]",
         "RepoURL": "https://github.com/magesh007/azure-full-integration.git",
         "Branch": "master",
-        "RootManageSharedAccessKey_name" : "RootManageSharedAccessKey"
-     },
+        "RootManageSharedAccessKey_name": "RootManageSharedAccessKey"
+    },
     "resources": [
-	    {
+        {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2020-06-01",
             "name": "[variables('serverFarmName')]",
@@ -77,7 +75,7 @@
                 "targetWorkerSizeId": 0
             }
         },
-		{
+        {
             "apiVersion": "2019-06-01",
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[ variables('funcStorageName')]",
@@ -87,7 +85,7 @@
             },
             "properties": {
                 "supportsHttpsTrafficOnly": false,
-		        "encryption": {
+                "encryption": {
                     "services": {
                         "file": {
                             "enabled": true
@@ -109,7 +107,7 @@
             "tags": {},
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts/',  variables('funcStorageName'))]"                
+                "[resourceId('Microsoft.Storage/storageAccounts/',  variables('funcStorageName'))]"
             ],
             "properties": {
                 "name": "[variables('functionName')]",
@@ -120,21 +118,21 @@
                 "siteConfig": {
                     "appSettings": [
                         {
-                            "name": "FUNCTIONS_WORKER_RUNTIME", 
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
                             "value": "python"
                         },
                         {
-                            "name": "FUNCTIONS_EXTENSION_VERSION", 
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
                             "value": "~4"
                         },
-			            {
-                            "name": "logTypeConfig", 
+                        {
+                            "name": "logTypeConfig",
                             "value": "[parameters('logTypeConfig')]"
                         },
                         {
                             "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('funcStorageName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('funcStorageName')),'2019-06-01').keys[0].value)]"
-                        },                        
+                        },
                         {
                             "name": "FUNCTION_APP_EDIT_MODE",
                             "value": "readwrite"
@@ -158,7 +156,23 @@
                         {
                             "name": "ContainerName",
                             "value": "[parameters('ContainerName')]"
-                        }                  
+                        },
+                        {
+                            "name": "WEBSITE_RUN_FROM_PACKAGE",
+                            "value": "1"
+                        },
+                        {
+                            "name": "AzureWebJobs.EventHubs_Logs.Disabled",
+                            "value": "true"
+                        },
+                        {
+                            "name": "AzureWebJobs.ServiceBus_Logs.Disabled",
+                            "value": "true"
+                        },
+                        {
+                            "name": "ServiceBusQueueName",
+                            "value": "disabled"
+                        }
                     ],
                     "linuxFxVersion": "[variables('linuxFxVersion')]",
                     "alwaysOn": true
@@ -170,7 +184,7 @@
                     "name": "web",
                     "type": "sourcecontrols",
                     "dependsOn": [
-                      "[resourceId('Microsoft.Web/sites/', variables('functionName'))]"
+                        "[resourceId('Microsoft.Web/sites/', variables('functionName'))]"
                     ],
                     "properties": {
                         "RepoUrl": "[variables('RepoURL')]",
@@ -178,8 +192,8 @@
                         "publishRunbook": true,
                         "IsManualIntegration": true
                     }
-               }
+                }
             ]
         }
-	]
+    ]
 }

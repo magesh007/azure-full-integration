@@ -131,10 +131,22 @@
                 "name": "[variables('functionName')]",
                 "siteConfig": {
                     "appSettings": [
-                        {"name": "FUNCTIONS_WORKER_RUNTIME", "value": "python"},
-                        {"name": "FUNCTIONS_EXTENSION_VERSION", "value": "~4"},
-                        {"name": "logTypeConfig", "value": "[parameters('logTypeConfig')]"},
-                        {"name": "debugMode", "value": "[parameters('debugMode')]"},
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "python"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~4"
+                        },
+                        {
+                            "name": "logTypeConfig",
+                            "value": "[parameters('logTypeConfig')]"
+                        },
+                        {
+                            "name": "debugMode",
+                            "value": "[parameters('debugMode')]"
+                        },
                         {
                             "name": "AzureWebJobsStorage",
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('funcStorageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts',  variables('funcStorageName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
@@ -146,6 +158,18 @@
                         {
                             "name": "ServiceBusQueueName",
                             "value": "[variables('queueName')]"
+                        },
+                        {
+                            "name": "WEBSITE_RUN_FROM_PACKAGE",
+                            "value": "1"
+                        },
+                        {
+                            "name": "AzureWebJobs.EventHubs_Logs.Disabled",
+                            "value": "true"
+                        },
+                        {
+                            "name": "AzureWebJobs.Blob_Logs.Disabled",
+                            "value": "true"
                         }
                     ],
                     "linuxFxVersion": "[variables('linuxFxVersion')]",
