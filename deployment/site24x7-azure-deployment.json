@@ -133,10 +133,6 @@
                             "value": "[listkeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('namespaces'), variables('RootManageSharedAccessKey_name')), '2017-04-01').primaryConnectionString]"
                         },
                         {
-                            "name": "WEBSITE_RUN_FROM_PACKAGE",
-                            "value": "1"
-                        },
-                        {
                             "name": "AzureWebJobs.ServiceBus_Logs.Disabled",
                             "value": "true"
                         },
@@ -147,6 +143,18 @@
                         {
                             "name": "ServiceBusQueueName",
                             "value": "disabled"
+                        },
+                        {
+                            "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+                            "value": "true"
+                        },
+                        {
+                            "name": "ENABLE_ORYX_BUILD",
+                            "value": "true"
+                        },
+                        {
+                            "name": "BUILD_FLAGS",
+                            "value": "Off"
                         }
                     ],
                     "linuxFxVersion": "[variables('linuxFxVersion')]",
