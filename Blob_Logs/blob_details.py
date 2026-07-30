@@ -41,4 +41,6 @@ class BlobDetails:
         return f"{self.year}_{self.month}_{self.day}_{self.hour}_{self.minute}"
 
     def __str__(self):
+        if self.vNet:
+            return f"{self.resource_group}_{self.flowLogName}_{self.day}_{self.hour}"
         return f"{self.resource_group}_{self.service_name}_{self.day}_{self.hour}"

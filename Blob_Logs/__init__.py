@@ -58,7 +58,8 @@ def main(myblob: func.InputStream):
                 checkpoint['check_pointIndex'] = (len(block_list[0])-1)
                 check_pointDB.put_check_point(checkpoint)
             return
-        except:
+        except Exception:
+            logging.exception("Blob processing failed")
             return
-    except Exception as e:
-        print(str(e))
+    except Exception:
+        logging.exception("Blob trigger failed")
