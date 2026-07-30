@@ -17,6 +17,10 @@
         "storageId": {
             "defaultValue": "/subscriptions/d78d883f-6db7-4729-89b8-47b944b57ad0/resourceGroups/Site24x7-VNetFlow-UAT/providers/Microsoft.Storage/storageAccounts/vnetflowstgnja2a",
             "type": "string"
+        },
+        "flowLogLocation": {
+            "defaultValue": "eastus",
+            "type": "string"
         }
     },
     "resources": [
@@ -24,7 +28,7 @@
             "type": "Microsoft.Network/networkWatchers/flowLogs",
             "apiVersion": "2023-09-01",
             "name": "[concat(parameters('networkWatcherName'), '/', parameters('flowLogName'))]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('flowLogLocation')]",
             "properties": {
                 "targetResourceId": "[parameters('targetVNetId')]",
                 "storageId": "[parameters('storageId')]",
