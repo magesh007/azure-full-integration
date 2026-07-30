@@ -1,0 +1,174 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "defaultValue": "S247VNetFlowUat",
+            "type": "string"
+        },
+        "logTypeConfig": {
+            "defaultValue": "Enter Log Type Config String",
+            "type": "String"
+        },
+        "LogCollectionStartTime": {
+            "defaultValue": "1",
+            "type": "string",
+            "metadata": {
+                "description": "Epoch seconds; blobs modified before this are skipped."
+            }
+        },
+        "Tail": {
+            "defaultValue": "True",
+            "type": "string"
+        },
+        "ContainerName": {
+            "defaultValue": "insights-logs-flowlogflowevent",
+            "type": "string"
+        },
+        "debugMode": {
+            "defaultValue": "True",
+            "type": "string"
+        }
+    },
+    "variables": {
+        "suffix": "[substring(toLower(uniqueString(resourceGroup().id, resourceGroup().location)),0,5)]",
+        "subscriptionid": "[subscription().subscriptionId]",
+        "location": "[resourceGroup().location]",
+        "linuxFxVersion": "DOCKER|mcr.microsoft.com/azure-functions/python:4-python3.9-appservice",
+        "funcStorageName": "[tolower(concat(substring(parameters('name'), 0, min(length(parameters('name')),16)), 'stg', variables('suffix')))]",
+        "flowLogStorageName": "[tolower(concat('vnetflowstg', variables('suffix')))]",
+        "functionName": "[concat(parameters('name'), '-Function-', variables('suffix'))]",
+        "serverFarmName": "[concat(parameters('name'), '-AppServicePlan-', variables('suffix'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "name": "[variables('serverFarmName')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "B1",
+                "tier": "Basic",
+                "size": "B1"
+            },
+            "kind": "linux",
+            "properties": {
+                "perSiteScaling": false,
+                "maximumElasticWorkerCount": 1,
+                "isSpot": false,
+                "reserved": true,
+                "isXenon": false,
+                "hyperV": false,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0
+            }
+        },
+        {
+            "apiVersion": "2019-06-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('funcStorageName')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "properties": {
+                "supportsHttpsTrafficOnly": false,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "enabled": true
+                        },
+                        "blob": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                }
+            }
+        },
+        {
+            "apiVersion": "2019-06-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('flowLogStorageName')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "supportsHttpsTrafficOnly": true
+            }
+        },
+        {
+            "apiVersion": "2018-11-01",
+            "name": "[variables('functionName')]",
+            "type": "Microsoft.Web/sites",
+            "kind": "functionapp,linux",
+            "location": "[variables('location')]",
+            "tags": {},
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('funcStorageName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('flowLogStorageName'))]"
+            ],
+            "properties": {
+                "name": "[variables('functionName')]",
+                "siteConfig": {
+                    "appSettings": [
+                        {"name": "FUNCTIONS_WORKER_RUNTIME", "value": "python"},
+                        {"name": "FUNCTIONS_EXTENSION_VERSION", "value": "~4"},
+                        {"name": "logTypeConfig", "value": "[parameters('logTypeConfig')]"},
+                        {"name": "debugMode", "value": "[parameters('debugMode')]"},
+                        {"name": "FUNCTION_APP_EDIT_MODE", "value": "readwrite"},
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('funcStorageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts',  variables('funcStorageName')), '2019-06-01').keys[0].value)]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('funcStorageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts',  variables('funcStorageName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
+                        },
+                        {
+                            "name": "blobconnectionstring",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('flowLogStorageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts',  variables('flowLogStorageName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
+                        },
+                        {"name": "LogCollectionStartTime", "value": "[parameters('LogCollectionStartTime')]"},
+                        {"name": "Tail", "value": "[parameters('Tail')]"},
+                        {"name": "ContainerName", "value": "[parameters('ContainerName')]"},
+                        {"name": "AzureWebJobs.EventHubs_Logs.Disabled", "value": "true"},
+                        {"name": "AzureWebJobs.ServiceBus_Logs.Disabled", "value": "true"},
+                        {"name": "ServiceBusQueueName", "value": "disabled"},
+                        {"name": "SCM_DO_BUILD_DURING_DEPLOYMENT", "value": "true"},
+                        {"name": "ENABLE_ORYX_BUILD", "value": "true"},
+                        {"name": "BUILD_FLAGS", "value": "Off"}
+                    ],
+                    "linuxFxVersion": "[variables('linuxFxVersion')]",
+                    "alwaysOn": true
+                },
+                "serverFarmId": "[concat('/subscriptions/', variables('subscriptionId'),'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('serverFarmName'))]",
+                "clientAffinityEnabled": false
+            },
+            "resources": [
+                {
+                    "apiVersion": "2018-11-01",
+                    "name": "web",
+                    "type": "sourcecontrols",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites/', variables('functionName'))]"
+                    ],
+                    "properties": {
+                        "RepoUrl": "https://github.com/magesh007/azure-full-integration.git",
+                        "branch": "master",
+                        "publishRunbook": true,
+                        "IsManualIntegration": true
+                    }
+                }
+            ]
+        }
+    ],
+    "outputs": {
+        "flowLogStorageAccount": {
+            "type": "string",
+            "value": "[variables('flowLogStorageName')]"
+        }
+    }
+}
