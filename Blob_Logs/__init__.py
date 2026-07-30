@@ -17,7 +17,7 @@ initialized = False
 
 if not initialized:
     with TableServiceClient.from_connection_string(table_connection_string) as table_service_client:
-        table_service_client.create_table_if_not_exists(table_name="check_points")
+        table_service_client.create_table_if_not_exists(table_name="Checkpoints")
     initialized = True
 
 def main(myblob: func.InputStream):
